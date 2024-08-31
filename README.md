@@ -4,6 +4,8 @@ A minimalistic FOSS to-do app for Windows, Mac and Linux using Python and JSON.
 
 ![TodoApp-preview](https://github.com/user-attachments/assets/c758accf-241b-4498-a8b4-01bf909dbadf)
 
+### Download Portable for Windows 10/11: 🔗 [TodoApp.exe](https://github.com/jltk/todo-app/releases/download/0.1.0/TodoApp.exe)
+
 ## Features
 
 - Simple and intuitive interface
@@ -14,7 +16,7 @@ A minimalistic FOSS to-do app for Windows, Mac and Linux using Python and JSON.
 
 ## Installation
 
-### Download for Windows 10/11: 🔗 [TodoApp.exe](https://github.com/jltk/todo-app/releases/download/0.1.0/TodoApp.exe)
+Check the [latest releases page](https://github.com/jltk/todo-app/releases).
 
 To run this application, you need Python 3.6 or higher.
 
