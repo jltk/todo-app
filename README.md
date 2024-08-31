@@ -1,6 +1,6 @@
 # todo-app
 
-A minimalisticto-do app for Windows, Mac and Linux using Python and JSON.
+A minimalistic FOSS to-do app for Windows, Mac and Linux using Python and JSON.
 
 ![TodoApp-preview](https://github.com/user-attachments/assets/c758accf-241b-4498-a8b4-01bf909dbadf)
 
