@@ -14,7 +14,7 @@ A minimalistic FOSS to-do app for Windows, Mac and Linux using Python and JSON.
 
 ## Installation
 
-### Download for Windows: TodoApp.exe
+### Download for Windows 10/11: 🔗 [TodoApp.exe](https://github.com/jltk/todo-app/releases/download/0.1.0/TodoApp.exe)
 
 To run this application, you need Python 3.6 or higher.
 
