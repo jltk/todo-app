@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "todo-app"
+version = "0.1.0"
+description = "A minimalistic to-do app"
+readme = "README.md"
+license = { text = "GPL" }
+authors = [
+  { name = "Jens Lettkemann", email = "jltk@pm.me" }
+]
+dependencies = [
+  "tkinter",  # If required explicitly
+]
