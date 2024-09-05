@@ -1,22 +1,30 @@
-# todo-app
+![app_icon](https://github.com/user-attachments/assets/2ddff14c-a387-4d8d-859a-1993192c8194)
 
-A minimalistic FOSS to-do app for Windows, Mac and Linux using Python and JSON.
+[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](#) [![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white)](#) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-darkred.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-![TodoApp-preview](https://github.com/user-attachments/assets/c758accf-241b-4498-a8b4-01bf909dbadf)
+# Todo App for Windows
 
-### Download Portable for Windows 10/11: 🔗 [TodoApp.exe](https://github.com/jltk/todo-app/releases/download/0.1.0/TodoApp.exe)
+A simple and private to-do deskop app using python tkinter and local storage for Windows. 
+
+Free and open-source alternative to the Microsoft To Do app using no third-party dependencies.
+
+![screenshot](https://github.com/user-attachments/assets/f1058d19-6700-4d37-aa7a-35d4cfa3c6ef)
 
 ## Features
 
 - Simple and intuitive interface
-- Dark mode and light mode
-- Local storage with JSON file, no database needed
-- Lightweight free open-source software
-- No third-party requirements
+- Dark mode
+- Own your data using local storage with JSON
+- Privacy-focused free open-source software
+- No third-party dependencies
 
 ## Installation
 
-Check the [latest releases page](https://github.com/jltk/todo-app/releases).
+### Download Portable .EXE for Windows 10/11: [🔗 TodoApp-0.2.0.zip](https://github.com/jltk/todo-app/releases/download/0.2.0/To-Do.zip) [6,18 MB] 
+
+or [visit the release page](https://github.com/jltk/todo-app/releases). 
+
+### Build from source
 
 To run this application, you need Python 3.6 or higher.
 
@@ -36,25 +44,28 @@ cd todo-app
 
 ```bash
 pip install -r requirements.txt
-
 ```
 
 4. Run the application:
 
 ```bash
-python -m todo_app.app
-
+python todo_app.app
 ```
-
-To bake exe for Windows use auto-py-to-exe.
 
 ## Shortcuts
 
-- Ctrl+D: Dark mode
-- Ctrl+U: Mark task as urgent
-- Ctrl+M: Mark task as done
-- Ctrl+Del: Delete task
+| KEYS | DESCRIPTION |
+| ---- | ----------- |
+| **Ctrl+D** | Mark tasks as done |
+| **Ctrl+U** | Mark tasks as urgent |
+| **Ctrl+Del** | Delete tasks |
+| **Ctrl+R** | Toggle dark mode |
+| **Ctrl+H** | About window |
+
+## Contribute
+
+Star and fork the repo and contribute improvements and fixes to the project.
 
 ## License
 
-This project is licensed under the GNU GPL License - see the LICENSE file for details.
+This project is licensed under the GPL license, [read the LICENSE file for details](https://github.com/jltk/todo-app/blob/main/LICENSE).
