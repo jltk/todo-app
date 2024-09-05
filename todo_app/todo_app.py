@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, simpledialog, messagebox
+import webbrowser
 import json
 from pathlib import Path
 from typing import List, Dict, Any
@@ -10,9 +11,9 @@ class TodoApp:
         self.root = root
         self.is_dark_mode = False
         self.tasks: List[Dict[str, Any]] = self.load_tasks()
-        self.ctrl_pressed = False
         self.shift_pressed = False
         self.bulk_selection_mode = False
+        self.key_event_processing = False
         self.selected_indices = set()
 
         self.root.withdraw()
@@ -21,10 +22,16 @@ class TodoApp:
         self.load_config()
         self.setup_bindings()
 
+        self.listbox.bind('<Button-1>', self.start_drag)
+        self.listbox.bind('<B1-Motion>', self.do_drag)
+        self.listbox.bind('<ButtonRelease-1>', self.end_drag)
+
+        self.drag_start_index = None
+
         self.root.after(10, self.show_window)
 
     def setup_ui(self):
-        self.root.title("TODO")
+        self.root.title("To-Do")
         self.root.minsize(300, 100)
         self.set_window_icon()
 
@@ -33,8 +40,8 @@ class TodoApp:
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
 
-        self.listbox = tk.Listbox(self.main_frame, selectmode=tk.SINGLE, bd=0, highlightthickness=0,
-                                  activestyle='none', font=self.get_system_font(), width=40, height=10)
+        self.listbox = tk.Listbox(self.main_frame, selectmode=tk.EXTENDED, bd=0, highlightthickness=0,
+                                activestyle='none', font=self.get_system_font(), width=40, height=10)
         self.listbox.grid(row=0, column=0, columnspan=4, sticky="nsew", padx=10, pady=(10, 5))
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
@@ -64,25 +71,47 @@ class TodoApp:
 
         self.populate_listbox()
         self.apply_theme()
-        
         self.update_buttons_state()
+        self.create_context_menu() 
 
     def setup_bindings(self):
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.root.bind_all('<Control-d>', self.toggle_dark_mode)
+        self.root.bind_all('<Control-r>', self.toggle_dark_mode)
         self.root.bind_all('<Control-u>', self.toggle_urgent_task)
-        self.root.bind_all('<Control-m>', self.mark_selected_tasks_done)
+        self.root.bind_all('<Control-d>', self.mark_selected_tasks_done)
         self.root.bind_all('<Delete>', self.remove_selected_tasks)
-        self.root.bind('<Control-a>', self.select_all_or_text)
+        self.root.bind_all('<Control-e>', self.edit_task_shortcut)
+        self.root.bind_all('<Control-a>', self.select_all_or_text)
         self.listbox.bind('<<ListboxSelect>>', self.update_buttons_state)
         self.listbox.bind('<Double-1>', self.mark_selected_tasks_done)
         self.entry.bind('<Return>', self.add_task)
         self.entry.bind('<KeyRelease>', self.update_buttons_state)
-        self.root.bind('<Control-KeyPress>', self.on_ctrl_key_press)
-        self.root.bind('<Control-KeyRelease>', self.on_ctrl_key_release)
-        self.root.bind('<Shift-KeyPress>', self.on_shift_key_press)
-        self.root.bind('<Shift-KeyRelease>', self.on_shift_key_release)
         self.listbox.bind('<Button-1>', self.on_listbox_click)
+        self.listbox.bind('<Button-3>', self.show_context_menu)
+        self.root.bind_all('<Control-h>', self.show_about_dialog)
+
+        self.listbox.bind('<Control-Button-1>', self.on_ctrl_click)
+        self.listbox.bind('<Shift-Button-1>', self.on_shift_click)
+
+
+    def on_ctrl_click(self, event):
+        """Handle Ctrl-click to select multiple tasks."""
+        index = self.listbox.nearest(event.y)
+        if index in self.listbox.curselection():
+            self.listbox.selection_clear(index)
+        else:
+            self.listbox.selection_set(index)
+
+    def on_shift_click(self, event):
+        """Handle Shift-click to select a range of tasks."""
+        index = self.listbox.nearest(event.y)
+        cur_selection = self.listbox.curselection()
+        if cur_selection:
+            start_index = cur_selection[0]
+            self.listbox.selection_clear(0, tk.END)
+            self.listbox.selection_set(start_index, index)
+        else:
+            self.listbox.selection_set(index)
 
     def on_entry_focus_in(self, event=None):
         colors = self.get_theme_colors()
@@ -100,10 +129,42 @@ class TodoApp:
         self.bulk_selection_mode = False
         self.update_buttons_state()
 
-    def set_window_icon(self):
+    def set_window_icon(self, window=None):
+        if window is None:
+            window = self.root
         icon_path = Path(__file__).parent / 'app_icon.ico'
         if icon_path.is_file():
-            self.root.iconbitmap(icon_path)
+            window.iconbitmap(icon_path)
+
+    def start_drag(self, event):
+        """Handle the start of the drag event."""
+        self.drag_start_index = self.listbox.nearest(event.y)
+        self.listbox.selection_clear(0, tk.END)
+        self.listbox.selection_set(self.drag_start_index)
+        self.selected_indices = {self.drag_start_index}
+        self.update_buttons_state()
+
+    def do_drag(self, event):
+        """Handle the dragging motion and visually highlight the item being dragged over."""
+        drag_over_index = self.listbox.nearest(event.y)
+        if drag_over_index != self.drag_start_index:
+            self.listbox.selection_clear(0, tk.END)
+            self.listbox.selection_set(drag_over_index)
+    
+    def end_drag(self, event):
+        """Handle dropping the item by moving it to the new position."""
+        drag_end_index = self.listbox.nearest(event.y)
+        if self.drag_start_index is not None and drag_end_index != self.drag_start_index:
+            self.reorder_tasks(self.drag_start_index, drag_end_index)
+        self.drag_start_index = None
+
+    def reorder_tasks(self, start_index, end_index):
+        """Move the task from start_index to end_index in the tasks list."""
+        task = self.tasks.pop(start_index)
+        self.tasks.insert(end_index, task)
+        self.populate_listbox()
+        self.save_tasks()
+        self.update_buttons_state()
 
     def apply_theme(self):
         colors = self.get_theme_colors()
@@ -116,7 +177,6 @@ class TodoApp:
         self.update_buttons_style(colors['button_bg'], colors['button_fg'])
         self.update_listbox_task_backgrounds()
 
-        # Set caret color based on theme
         self.entry.config(insertbackground=colors['caret_color'])
 
     def get_theme_colors(self):
@@ -131,36 +191,37 @@ class TodoApp:
             'button_fg': '#00BFFF' if self.is_dark_mode else '#1E90FF',
             'listbox_bg': '#17191e' if self.is_dark_mode else 'white',
             'select_bg': '#555555' if self.is_dark_mode else '#d3d3d3',
-            'done_color': '#29C458' if self.is_dark_mode else '#29C458'
+            'done_bg': '#29C458' if self.is_dark_mode else '#29C458',
+            'done_fg': '#1A7B37' if self.is_dark_mode else '#1A7B37',
+            'urgent_bg': '#e72f3f' if self.is_dark_mode else '#e72f3f'
         }
 
     def update_buttons_style(self, bg, fg):
         style = ttk.Style()
         style.configure('TButton', background=bg, foreground=fg, padding=5)
         style.map('TButton', 
-                  background=[('active', bg), ('disabled', '#666666' if self.is_dark_mode else '#c0c0c0')],
-                  foreground=[('active', fg), ('disabled', 'grey')])
+                background=[('active', bg), ('disabled', '#666666' if self.is_dark_mode else '#c0c0c0')],
+                foreground=[('active', fg), ('disabled', 'grey')])
 
     def populate_listbox(self):
         self.listbox.delete(0, tk.END)
         for index, task in enumerate(self.tasks):
             if task.get('done', False):
                 display_text = f"✔ {task['name']}"
-            elif task.get('urgent', False):
-                display_text = f"🔲 {task['name']}"
             else:
                 display_text = f"⬜ {task['name']}"
             self.listbox.insert(tk.END, display_text)
         self.update_listbox_task_backgrounds()
         self.adjust_window_size()
+        self.update_title()
 
     def update_listbox_task_backgrounds(self):
         colors = self.get_theme_colors()
         for index, task in enumerate(self.tasks):
             if task.get('done', False):
-                bg, fg = colors['done_color'], 'white'
+                bg, fg = colors['done_bg'], colors['done_fg']
             elif task.get('urgent', False):
-                bg, fg = '#e72f3f', 'white'
+                bg, fg = colors['urgent_bg'], 'white'
             else:
                 bg, fg = colors['listbox_bg'], colors['fg']
             self.listbox.itemconfig(index, {'bg': bg, 'fg': fg})
@@ -173,23 +234,32 @@ class TodoApp:
             self.save_tasks()
             self.entry.delete("1.0", tk.END)
             self.update_buttons_state()
+            self.update_title()
+
+            self.entry.focus_set()
 
     def remove_selected_tasks(self, event=None):
-        selected_indices = sorted(self.listbox.curselection(), reverse=True)
-        for index in selected_indices:
+        selected_indices = list(self.listbox.curselection())
+        for index in reversed(selected_indices):
             del self.tasks[index]
         self.populate_listbox()
         self.save_tasks()
         self.update_buttons_state()
+        self.update_title()
+
 
     def mark_selected_tasks_done(self, event=None):
         selected_indices = self.listbox.curselection()
         for index in selected_indices:
             task = self.tasks[index]
             task['done'] = not task.get('done', False)
+            if task.get('urgent', False) and task['done']:
+                task['urgent'] = False
         self.populate_listbox()
         self.save_tasks()
         self.update_buttons_state()
+        self.update_title()
+
 
     def toggle_urgent_task(self, event=None):
         selected_indices = self.listbox.curselection()
@@ -199,17 +269,41 @@ class TodoApp:
         self.populate_listbox()
         self.save_tasks()
         self.update_buttons_state()
+        self.update_title()
+
 
     def update_buttons_state(self, event=None):
         has_selection = bool(self.listbox.curselection()) or self.bulk_selection_mode
+        if event and event.type == '4':  # KeyRelease event
+            return
+
         self.buttons["➕"]['state'] = 'normal' if self.entry.get("1.0", "end-1c").strip() else 'disabled'
         for button in ["➖", "✔"]:
             self.buttons[button]['state'] = 'normal' if has_selection else 'disabled'
 
+
+
     def adjust_window_size(self):
         num_tasks = len(self.tasks)
-        new_height = max(100, min(500, 100 + (num_tasks * 20)))
+        new_height = max(100, min(800, 100 + (num_tasks * 18)))
         self.root.geometry(f"300x{new_height}")
+
+    def count_urgent_tasks(self):
+        return sum(1 for task in self.tasks if task.get('urgent', False))
+
+    def update_title(self):
+        total_tasks = len(self.tasks)
+        done_tasks = sum(task.get('done', False) for task in self.tasks)
+        urgent_tasks = self.count_urgent_tasks()
+
+        urgent_text = f"[{urgent_tasks} urgent]" if urgent_tasks > 0 else ""
+
+        if total_tasks == 0:
+            self.root.title("To-Do")
+        elif done_tasks == total_tasks:
+            self.root.title(f"To-Do ({done_tasks}/{total_tasks}) — All done! {urgent_text}")
+        else:
+            self.root.title(f"To-Do ({done_tasks}/{total_tasks}) {urgent_text}")
 
     @staticmethod
     def get_base_dir():
@@ -217,11 +311,11 @@ class TodoApp:
 
     @classmethod
     def get_tasks_file(cls):
-        return cls.get_base_dir() / 'todo_app' / 'data' / 'tasks.json'
+        return cls.get_base_dir() / 'todo_app' / 'tasks.json'
 
     @classmethod
     def get_config_file(cls):
-        return cls.get_base_dir() / 'todo_app' / 'data' / 'config.json'
+        return cls.get_base_dir() / 'todo_app' / 'config.json'
 
     @classmethod
     def load_tasks(cls):
@@ -239,13 +333,16 @@ class TodoApp:
             print(f"Error saving tasks: {e}")
 
     def save_config(self):
-        config_file = self.get_config_file()
-        config_file.parent.mkdir(parents=True, exist_ok=True)
-        config = {
-            'geometry': self.root.geometry(),
-            'dark_mode': self.is_dark_mode
-        }
-        config_file.write_text(json.dumps(config, indent=4), encoding='utf-8')
+        try:
+            config_file = self.get_config_file()
+            config_file.parent.mkdir(parents=True, exist_ok=True)
+            config = {
+                'geometry': self.root.geometry(),
+                'dark_mode': self.is_dark_mode
+            }
+            config_file.write_text(json.dumps(config, indent=4), encoding='utf-8')
+        except Exception as e:
+            print(f"Error saving config: {e}")
 
     def load_config(self):
         config_file = self.get_config_file()
@@ -257,6 +354,122 @@ class TodoApp:
             self.initial_geometry = config.get('geometry', '')
         else:
             self.initial_geometry = ''
+
+    def create_context_menu(self):
+        self.context_menu = tk.Menu(self.root, tearoff=0)
+        self.context_menu.add_command(label="Edit Task", command=self.edit_task_shortcut)
+        self.context_menu.add_command(label="Un/Mark as Done", command=self.mark_selected_tasks_done)
+        self.context_menu.add_command(label="Un/Mark as Urgent", command=self.toggle_urgent_task)
+        self.context_menu.add_command(label="Remove Task/s", command=self.remove_selected_tasks)
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label="Toggle Dark Mode", command=self.toggle_dark_mode)
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label="About", command=self.show_about_dialog)
+
+    def show_about_dialog(self, event=None):
+        about_window = tk.Toplevel(self.root)
+        about_window.title("About")
+        about_window.resizable(False, False)
+
+        self.set_window_icon(about_window)
+
+        about_text = (
+            "To-Do App 0.2.0\n\n"
+            "2024 Jens Lettkemann <jltk@pm.me>\n\n"
+            "This software is licensed under GPLv3+.\n"
+        )
+        github_link = "https://github.com/jltk/todo-app\n"
+        license_link = "https://github.com/jltk/todo-app/LICENSE"
+
+        text_frame = tk.Frame(about_window, padx=10, pady=10)
+        text_frame.pack(fill="both", expand=True)
+
+        text = tk.Label(text_frame, text=about_text, anchor="center")
+        text.pack(fill="x", pady=(0, 5))
+
+        github_label = tk.Label(text_frame, text=github_link, fg="blue", cursor="hand2")
+        github_label.pack(fill="x", pady=5)
+        github_label.bind("<Button-1>", lambda e: self.open_link("https://github.com/jltk/todo-app"))
+
+        license_label = tk.Label(text_frame, text=license_link, fg="blue", cursor="hand2")
+        license_label.pack(fill="x", pady=5)
+        license_label.bind("<Button-1>", lambda e: self.open_link("https://github.com/jltk/todo-app/LICENSE"))
+
+        about_window.update_idletasks()
+        min_width = max(text.winfo_width(), github_label.winfo_width(), license_label.winfo_width()) + 20
+        min_height = text.winfo_height() + github_label.winfo_height() + license_label.winfo_height() + 40
+        about_window.geometry(f"{min_width}x{min_height}")
+
+        self.center_window_over_window(about_window)
+
+    def center_window_over_window(self, window):
+        window.update_idletasks()
+        
+        main_window_width = self.root.winfo_width()
+        main_window_height = self.root.winfo_height()
+        main_window_x = self.root.winfo_x()
+        main_window_y = self.root.winfo_y()
+
+        window_width = window.winfo_reqwidth()
+        window_height = window.winfo_reqheight()
+
+        x = main_window_x + (main_window_width - window_width) // 2
+        y = main_window_y + (main_window_height - window_height) // 2
+
+        window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    def open_link(self, url):
+        import webbrowser
+        webbrowser.open(url)
+
+    def show_context_menu(self, event):
+        try:
+            self.context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.context_menu.grab_release()
+
+    def on_listbox_click(self, event):
+        if event.num == 3:  # Right-click
+            self.show_context_menu(event)
+        else:
+            index = self.listbox.nearest(event.y)
+            if self.bulk_selection_mode:
+                self.handle_bulk_selection(index)
+            else:
+                self.handle_single_selection(index)
+
+    def remove_task_shortcut(self, event=None):
+        if self.listbox.curselection():
+            self.remove_selected_tasks()
+
+    def mark_as_done_shortcut(self, event=None):
+        if self.listbox.curselection():
+            self.mark_selected_tasks_done()
+
+    def edit_task_shortcut(self, event=None):
+        if self.listbox.curselection():
+            self.edit_task()
+
+    def edit_task(self):
+        selected_indices = self.listbox.curselection()
+        if not selected_indices:
+            return
+        
+        index = selected_indices[0]
+        current_task = self.tasks[index]
+        
+        new_name = simpledialog.askstring(
+            "Edit Task", 
+            "Edit task name:", 
+            initialvalue=current_task['name'],
+            parent=self.root 
+        )
+        if new_name is not None:
+            self.tasks[index]['name'] = new_name
+            self.populate_listbox()
+            self.save_tasks()
+            self.update_buttons_state()
+            self.update_title()
 
     def show_window(self):
         if self.initial_geometry:
@@ -275,6 +488,20 @@ class TodoApp:
             self.root.attributes('-topmost', False)
 
     def on_close(self):
+        self.root.unbind_all('<Control-v>')
+        self.root.unbind_all('<Control-u>')
+        self.root.unbind_all('<Control-d>')
+        self.root.unbind_all('<Delete>')
+        self.root.unbind_all('<Control-e>')
+        self.root.unbind_all('<Control-a>')
+        self.listbox.unbind('<<ListboxSelect>>')
+        self.listbox.unbind('<Double-1>')
+        self.entry.unbind('<Return>')
+        self.entry.unbind('<KeyRelease>')
+        self.listbox.unbind('<Button-1>')
+        self.listbox.unbind('<Button-3>')
+        self.root.unbind_all('<Control-h>')
+
         self.save_config()
         self.root.destroy()
 
@@ -294,15 +521,14 @@ class TodoApp:
 
     @staticmethod
     def get_system_font():
-        return ('Segoe UI', 10) if sys.platform == 'win32' else ('San Francisco', 11) if sys.platform == 'darwin' else ('Arial', 10)
+        return ('Segoe UI', 10) if sys.platform == 'win32' else ('San Francisco', 11) if sys.platform == 'darwin' else ('Segoe UI', 10)
 
-    def on_ctrl_key_press(self, event):
-        self.ctrl_pressed = True
-        self.update_bulk_selection_mode()
-
-    def on_ctrl_key_release(self, event):
-        self.ctrl_pressed = False
-        self.update_bulk_selection_mode()
+    def update_bulk_selection_mode(self):
+        if self.shift_pressed:
+            self.bulk_selection_mode = True
+        else:
+            self.bulk_selection_mode = False
+        self.update_buttons_state()
 
     def on_shift_key_press(self, event):
         self.shift_pressed = True
@@ -311,19 +537,6 @@ class TodoApp:
     def on_shift_key_release(self, event):
         self.shift_pressed = False
         self.update_bulk_selection_mode()
-
-    def update_bulk_selection_mode(self):
-        self.bulk_selection_mode = self.ctrl_pressed or self.shift_pressed
-        if not self.bulk_selection_mode:
-            self.selected_indices = set(self.listbox.curselection())
-        self.update_buttons_state()
-
-    def on_listbox_click(self, event):
-        index = self.listbox.nearest(event.y)
-        if self.bulk_selection_mode:
-            self.handle_bulk_selection(index)
-        else:
-            self.handle_single_selection(index)
 
     def handle_single_selection(self, index):
         if index in self.selected_indices:
