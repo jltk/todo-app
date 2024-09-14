@@ -1,10 +1,10 @@
 ![app_icon](https://github.com/user-attachments/assets/2ddff14c-a387-4d8d-859a-1993192c8194)
 
-[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](#) [![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white)](#) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-darkred.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white)](#) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](#) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-darkred.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 # Todo App for Windows
 
-A simple and private to-do deskop app using python tkinter and local storage for Windows. 
+A simple and private to-do deskop app using python tkinter and JSON local storage for Windows. 
 
 Free and open-source alternative to the Microsoft To Do app using no third-party dependencies.
 
@@ -14,13 +14,13 @@ Free and open-source alternative to the Microsoft To Do app using no third-party
 
 - Simple and intuitive interface
 - Dark mode
-- Own your data using local storage with JSON
-- Privacy-focused free open-source software
+- Own your data with local storage
+- Lightweight free open-source software
 - No third-party dependencies
 
 ## Installation
 
-### Download Portable .EXE for Windows 10/11: [🔗 TodoApp-0.2.0.zip](https://github.com/jltk/todo-app/releases/download/0.2.0/To-Do.zip) [6,18 MB] 
+### Download Portable .EXE for Windows 10/11: [🔗 To-Do_0.2.1.zip](https://github.com/jltk/todo-app/releases/download/0.2.1/To-Do_0.2.1.zip) [6,64 MB] 
 
 or [visit the release page](https://github.com/jltk/todo-app/releases). 
 
@@ -31,25 +31,26 @@ To run this application, you need Python 3.6 or higher.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/jltk/todo-app.git
+$ git clone https://github.com/jltk/todo-app.git
 ```
 
 2. Navigate to the project directory:
 
 ```bash
-cd todo-app
+$ cd todo-app
 ```
 
 3. Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 
 4. Run the application:
 
 ```bash
-python todo_app.app
+$ cd todo_app
+$ python todo_app.py
 ```
 
 ## Shortcuts
@@ -59,6 +60,7 @@ python todo_app.app
 | **Ctrl+D** | Mark tasks as done |
 | **Ctrl+U** | Mark tasks as urgent |
 | **Ctrl+Del** | Delete tasks |
+| **Ctrl+E** | Edit task |
 | **Ctrl+R** | Toggle dark mode |
 | **Ctrl+H** | About window |
 
