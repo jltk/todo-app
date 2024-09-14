@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any
 import sys
+from tkinter import PhotoImage
 
 class TodoApp:
     def __init__(self, root: tk.Tk):
@@ -42,7 +43,7 @@ class TodoApp:
 
         self.listbox = tk.Listbox(self.main_frame, selectmode=tk.EXTENDED, bd=0, highlightthickness=0,
                                 activestyle='none', font=self.get_system_font(), width=40, height=10)
-        self.listbox.grid(row=0, column=0, columnspan=4, sticky="nsew", padx=10, pady=(10, 5))
+        self.listbox.grid(row=0, column=0, columnspan=4, sticky="nsew", padx=10, pady=(8, 5))
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
@@ -95,12 +96,27 @@ class TodoApp:
 
 
     def on_ctrl_click(self, event):
-        """Handle Ctrl-click to select multiple tasks."""
+        """Handle robust Ctrl-click to toggle selection of individual tasks."""
         index = self.listbox.nearest(event.y)
         if index in self.listbox.curselection():
             self.listbox.selection_clear(index)
         else:
             self.listbox.selection_set(index)
+
+        return 'break'
+
+    def on_ctrl_click(self, event):
+        """Handle robust Ctrl-click to toggle selection of individual tasks."""
+        index = self.listbox.nearest(event.y)
+        if index in self.listbox.curselection():
+            self.listbox.selection_clear(index)
+        else:
+            self.listbox.selection_set(index)
+
+        # Update buttons state after selection change
+        self.update_buttons_state()
+
+        return 'break'
 
     def on_shift_click(self, event):
         """Handle Shift-click to select a range of tasks."""
@@ -281,8 +297,6 @@ class TodoApp:
         for button in ["➖", "✔"]:
             self.buttons[button]['state'] = 'normal' if has_selection else 'disabled'
 
-
-
     def adjust_window_size(self):
         num_tasks = len(self.tasks)
         new_height = max(100, min(800, 100 + (num_tasks * 18)))
@@ -371,11 +385,20 @@ class TodoApp:
         about_window.title("About")
         about_window.resizable(False, False)
 
+        # Set window icon
         self.set_window_icon(about_window)
 
+        # Load and display app icon
+        icon_path = Path(__file__).parent / 'app_logo.png'
+        if icon_path.is_file():
+            app_icon = PhotoImage(file=icon_path)
+            icon_label = tk.Label(about_window, image=app_icon)
+            icon_label.image = app_icon  # Keep a reference to avoid garbage collection
+            icon_label.pack(pady=(5, 5))  # Add some padding around the icon
+
         about_text = (
-            "To-Do App 0.2.0\n\n"
-            "2024 Jens Lettkemann <jltk@pm.me>\n\n"
+            "To-Do App 0.2.1\n\n"
+            "© 2024 Jens Lettkemann <jltk@pm.me>\n\n"
             "This software is licensed under GPLv3+.\n"
         )
         github_link = "https://github.com/jltk/todo-app\n"
@@ -454,22 +477,61 @@ class TodoApp:
         selected_indices = self.listbox.curselection()
         if not selected_indices:
             return
-        
+
         index = selected_indices[0]
         current_task = self.tasks[index]
-        
-        new_name = simpledialog.askstring(
-            "Edit Task", 
-            "Edit task name:", 
-            initialvalue=current_task['name'],
-            parent=self.root 
-        )
-        if new_name is not None:
-            self.tasks[index]['name'] = new_name
-            self.populate_listbox()
-            self.save_tasks()
-            self.update_buttons_state()
-            self.update_title()
+
+        # Create a Toplevel window for editing the task
+        edit_window = tk.Toplevel(self.root)
+        edit_window.title("Edit Task")
+        edit_window.geometry("200x120")  # Larger size for the edit window
+        edit_window.transient(self.root)  # Make the edit window stay on top of the root window
+        edit_window.grab_set()  # Make the edit window modal
+
+        self.set_window_icon(edit_window)  # Set the icon for the edit window
+
+        # Create a frame to contain the widgets
+        frame = tk.Frame(edit_window, padx=20, pady=20)
+        frame.pack(fill="both", expand=True)
+
+        # Create a Text widget for task editing
+        text_entry = tk.Text(frame, wrap='word', height=2, width=28)
+        text_entry.insert(tk.END, current_task['name'])
+        text_entry.pack(fill="both", expand=True)
+
+        def on_save(event=None):
+            new_name = text_entry.get("1.0", "end-1c").strip()
+            if new_name:
+                self.tasks[index]['name'] = new_name
+                self.populate_listbox()
+                self.save_tasks()
+                self.update_buttons_state()
+                self.update_title()
+            edit_window.destroy()
+
+        def on_cancel():
+            edit_window.destroy()
+
+        # Bind Enter key to the on_save function
+        text_entry.bind("<Return>", on_save)
+
+        # Create Save and Cancel buttons
+        button_frame = tk.Frame(frame)
+        button_frame.pack(fill="x", pady=(10, 0))
+
+        save_button = tk.Button(button_frame, text="Save", command=on_save)
+        save_button.pack(side="left", padx=0)  # Align to the left side of the frame
+
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel)
+        cancel_button.pack(side="left", padx=5)  # Align to the left side of the frame
+
+        # Center the button_frame horizontally
+        button_frame.pack(side="bottom", pady=(10, 0), fill="x")
+
+        edit_window.protocol("WM_DELETE_WINDOW", on_cancel)
+        self.center_window_over_window(edit_window)
+
+
 
     def show_window(self):
         if self.initial_geometry:
@@ -521,7 +583,7 @@ class TodoApp:
 
     @staticmethod
     def get_system_font():
-        return ('Segoe UI', 10) if sys.platform == 'win32' else ('San Francisco', 11) if sys.platform == 'darwin' else ('Segoe UI', 10)
+        return ('Segoe UI', 10) if sys.platform == 'win32' else ('San Francisco', 11) if sys.platform == 'darwin' else ('Arial', 10)
 
     def update_bulk_selection_mode(self):
         if self.shift_pressed:
