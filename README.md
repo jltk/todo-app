@@ -4,7 +4,7 @@
 
 # Todo App for Windows
 
-A simple and private to-do deskop app for Windows using python tkinter and JSON local storage.
+A simple and private to-do desktop app for Windows using python tkinter and JSON local storage.
 
 Free and open-source alternative to the Microsoft To Do app using no third-party dependencies.
 
