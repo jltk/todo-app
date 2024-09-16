@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="todo-app",
-    version="0.1.0",
+    version="0.2.2",
     packages=find_packages(),
     install_requires=[
-        # List any additional dependencies here
+
     ],
     entry_points={
         'console_scripts': [
