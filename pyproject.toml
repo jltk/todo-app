@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "todo-app"
-version = "0.2.0"
+version = "0.2.2"
 description = "Simple todo app with python tkinter GUI"
 readme = "README.md"
 license = { text = "GPL" }
