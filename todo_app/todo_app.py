@@ -1,17 +1,17 @@
 import tkinter as tk
-from tkinter import ttk, simpledialog, messagebox
-import webbrowser
-import json
+from tkinter import ttk
 from pathlib import Path
-from typing import List, Dict, Any
 import sys
-from tkinter import PhotoImage
+
+json = None
+PhotoImage = None
+webbrowser = None
 
 class TodoApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.is_dark_mode = False
-        self.tasks: List[Dict[str, Any]] = self.load_tasks()
+        self.tasks = self.load_tasks()
         self.shift_pressed = False
         self.bulk_selection_mode = False
         self.key_event_processing = False
@@ -78,21 +78,25 @@ class TodoApp:
     def setup_bindings(self):
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.bind_all('<Control-r>', self.toggle_dark_mode)
-        self.root.bind_all('<Control-u>', self.toggle_urgent_task)
-        self.root.bind_all('<Control-d>', self.mark_selected_tasks_done)
-        self.root.bind_all('<Delete>', self.remove_selected_tasks)
-        self.root.bind_all('<Control-e>', self.edit_task_shortcut)
-        self.root.bind_all('<Control-a>', self.select_all_or_text)
-        self.listbox.bind('<<ListboxSelect>>', self.update_buttons_state)
-        self.listbox.bind('<Double-1>', self.mark_selected_tasks_done)
-        self.entry.bind('<Return>', self.add_task)
-        self.entry.bind('<KeyRelease>', self.update_buttons_state)
-        self.listbox.bind('<Button-1>', self.on_listbox_click)
-        self.listbox.bind('<Button-3>', self.show_context_menu)
         self.root.bind_all('<Control-h>', self.show_about_dialog)
 
+        self.listbox.bind('<Control-u>', self.toggle_urgent_task)
+        self.listbox.bind('<Control-d>', self.mark_selected_tasks_done)
+
+        self.listbox.bind('<Delete>', self.remove_selected_tasks)
+        self.listbox.bind('<Control-e>', self.edit_task_shortcut)
+        self.listbox.bind('<Control-a>', self.select_all_or_text)
+
+        self.listbox.bind('<<ListboxSelect>>', self.update_buttons_state)
+        self.listbox.bind('<Double-1>', self.mark_selected_tasks_done)
+        self.listbox.bind('<Button-1>', self.on_listbox_click)
+        self.listbox.bind('<Button-3>', self.show_context_menu)
         self.listbox.bind('<Control-Button-1>', self.on_ctrl_click)
         self.listbox.bind('<Shift-Button-1>', self.on_shift_click)
+
+        self.entry.bind('<Return>', self.add_task)
+        self.entry.bind('<KeyRelease>', self.update_buttons_state)
+
 
 
     def on_ctrl_click(self, event):
@@ -113,7 +117,6 @@ class TodoApp:
         else:
             self.listbox.selection_set(index)
 
-        # Update buttons state after selection change
         self.update_buttons_state()
 
         return 'break'
@@ -146,6 +149,7 @@ class TodoApp:
         self.update_buttons_state()
 
     def set_window_icon(self, window=None):
+        global PhotoImage
         if window is None:
             window = self.root
         icon_path = Path(__file__).parent / 'app_icon.ico'
@@ -209,7 +213,7 @@ class TodoApp:
             'select_bg': '#555555' if self.is_dark_mode else '#d3d3d3',
             'done_bg': '#29C458' if self.is_dark_mode else '#29C458',
             'done_fg': '#1A7B37' if self.is_dark_mode else '#1A7B37',
-            'urgent_bg': '#e72f3f' if self.is_dark_mode else '#e72f3f'
+            'urgent_bg': '#de3f4d' if self.is_dark_mode else '#de3f4d'
         }
 
     def update_buttons_style(self, bg, fg):
@@ -290,7 +294,7 @@ class TodoApp:
 
     def update_buttons_state(self, event=None):
         has_selection = bool(self.listbox.curselection()) or self.bulk_selection_mode
-        if event and event.type == '4':  # KeyRelease event
+        if event and event.type == '4':
             return
 
         self.buttons["➕"]['state'] = 'normal' if self.entry.get("1.0", "end-1c").strip() else 'disabled'
@@ -333,6 +337,9 @@ class TodoApp:
 
     @classmethod
     def load_tasks(cls):
+        global json
+        if json is None:
+            import json
         tasks_file = cls.get_tasks_file()
         tasks_file.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -341,12 +348,18 @@ class TodoApp:
             return []
 
     def save_tasks(self):
+        global json
+        if json is None:
+            import json
         try:
             self.get_tasks_file().write_text(json.dumps(self.tasks, indent=4), encoding='utf-8')
         except Exception as e:
             print(f"Error saving tasks: {e}")
 
     def save_config(self):
+        global json
+        if json is None:
+            import json
         try:
             config_file = self.get_config_file()
             config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -359,6 +372,9 @@ class TodoApp:
             print(f"Error saving config: {e}")
 
     def load_config(self):
+        global json
+        if json is None:
+            import json
         config_file = self.get_config_file()
         if config_file.is_file():
             config = json.loads(config_file.read_text(encoding='utf-8'))
@@ -381,23 +397,24 @@ class TodoApp:
         self.context_menu.add_command(label="About", command=self.show_about_dialog)
 
     def show_about_dialog(self, event=None):
+        global PhotoImage
+        if PhotoImage is None:
+            from tkinter import PhotoImage
         about_window = tk.Toplevel(self.root)
         about_window.title("About")
         about_window.resizable(False, False)
 
-        # Set window icon
         self.set_window_icon(about_window)
 
-        # Load and display app icon
         icon_path = Path(__file__).parent / 'app_logo.png'
         if icon_path.is_file():
             app_icon = PhotoImage(file=icon_path)
             icon_label = tk.Label(about_window, image=app_icon)
-            icon_label.image = app_icon  # Keep a reference to avoid garbage collection
-            icon_label.pack(pady=(5, 5))  # Add some padding around the icon
+            icon_label.image = app_icon 
+            icon_label.pack(pady=(5, 5))
 
         about_text = (
-            "To-Do App 0.2.1\n\n"
+            "To-Do App 0.2.2\n\n"
             "© 2024 Jens Lettkemann <jltk@pm.me>\n\n"
             "This software is licensed under GPLv3+.\n"
         )
@@ -442,7 +459,9 @@ class TodoApp:
         window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
     def open_link(self, url):
-        import webbrowser
+        global webbrowser
+        if webbrowser is None:
+            import webbrowser
         webbrowser.open(url)
 
     def show_context_menu(self, event):
@@ -452,7 +471,7 @@ class TodoApp:
             self.context_menu.grab_release()
 
     def on_listbox_click(self, event):
-        if event.num == 3:  # Right-click
+        if event.num == 3:
             self.show_context_menu(event)
         else:
             index = self.listbox.nearest(event.y)
@@ -481,23 +500,28 @@ class TodoApp:
         index = selected_indices[0]
         current_task = self.tasks[index]
 
-        # Create a Toplevel window for editing the task
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Edit Task")
-        edit_window.geometry("200x120")  # Larger size for the edit window
-        edit_window.transient(self.root)  # Make the edit window stay on top of the root window
-        edit_window.grab_set()  # Make the edit window modal
+        edit_window.geometry("200x120")
+        edit_window.transient(self.root)
+        edit_window.grab_set()
 
-        self.set_window_icon(edit_window)  # Set the icon for the edit window
+        self.set_window_icon(edit_window)
 
-        # Create a frame to contain the widgets
         frame = tk.Frame(edit_window, padx=20, pady=20)
         frame.pack(fill="both", expand=True)
 
-        # Create a Text widget for task editing
         text_entry = tk.Text(frame, wrap='word', height=2, width=28)
         text_entry.insert(tk.END, current_task['name'])
         text_entry.pack(fill="both", expand=True)
+
+        def select_all_text(event=None):
+            text_entry.tag_add(tk.SEL, "1.0", tk.END)
+            text_entry.mark_set(tk.INSERT, "1.0")
+            text_entry.see(tk.INSERT)
+            return "break" 
+
+        text_entry.bind("<Control-a>", select_all_text)
 
         def on_save(event=None):
             new_name = text_entry.get("1.0", "end-1c").strip()
@@ -512,25 +536,21 @@ class TodoApp:
         def on_cancel():
             edit_window.destroy()
 
-        # Bind Enter key to the on_save function
         text_entry.bind("<Return>", on_save)
 
-        # Create Save and Cancel buttons
         button_frame = tk.Frame(frame)
         button_frame.pack(fill="x", pady=(10, 0))
 
-        save_button = tk.Button(button_frame, text="Save", command=on_save)
-        save_button.pack(side="left", padx=0)  # Align to the left side of the frame
+        save_button = ttk.Button(button_frame, text="Save", command=on_save)
+        save_button.pack(side="left", padx=0)
 
-        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel)
-        cancel_button.pack(side="left", padx=5)  # Align to the left side of the frame
+        cancel_button = ttk.Button(button_frame, text="Cancel", command=on_cancel)
+        cancel_button.pack(side="left", padx=5)
 
-        # Center the button_frame horizontally
         button_frame.pack(side="bottom", pady=(10, 0), fill="x")
 
         edit_window.protocol("WM_DELETE_WINDOW", on_cancel)
         self.center_window_over_window(edit_window)
-
 
 
     def show_window(self):
