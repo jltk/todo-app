@@ -4,11 +4,11 @@
 
 # Todo App for Windows
 
-A simple and private to-do deskop app using python tkinter and JSON local storage for Windows. 
+A simple and private to-do deskop app for Windows using python tkinter and JSON local storage.
 
 Free and open-source alternative to the Microsoft To Do app using no third-party dependencies.
 
-![screenshot](https://github.com/user-attachments/assets/f1058d19-6700-4d37-aa7a-35d4cfa3c6ef)
+![screenshot](https://github.com/user-attachments/assets/80bea193-bb83-44f3-aa71-839c2efdcd69)
 
 ## Features
 
@@ -20,13 +20,13 @@ Free and open-source alternative to the Microsoft To Do app using no third-party
 
 ## Installation
 
-### Download Portable .EXE for Windows 10/11: [🔗 To-Do_0.2.1.zip](https://github.com/jltk/todo-app/releases/download/0.2.1/To-Do_0.2.1.zip) [6,64 MB] 
+### Download Portable .EXE for Windows 10/11: [🔗 To-Do_0.2.2.zip](https://github.com/jltk/todo-app/releases/download/0.2.2/To-Do_0.2.2.zip) [5,29 MB] 
 
 or [visit the release page](https://github.com/jltk/todo-app/releases). 
 
 ### Build from source
 
-To run this application, you need Python 3.6 or higher.
+To run this application, you need Python 3.9 or higher.
 
 1. Clone the repository:
 
