@@ -1,14 +1,14 @@
-![app_icon](https://github.com/user-attachments/assets/2ddff14c-a387-4d8d-859a-1993192c8194)
+![app_icon](https://github.com/user-attachments/assets/9f082ded-572f-435e-b237-f62349d6e2e8)
 
-[![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white)](#) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](#) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-darkred.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](#) [![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white)](#) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-darkred.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 # Todo App for Windows
 
-A simple and private to-do desktop app for Windows using python tkinter and JSON local storage.
+A simple and private to-do GUI desktop app for Windows using python Tkinter and JSON local storage.
 
-Free and open-source alternative to the Microsoft To Do app using no third-party dependencies.
+Free and open-source alternative to Microsoft To Do without third-party dependencies.
 
-![screenshot](https://github.com/user-attachments/assets/80bea193-bb83-44f3-aa71-839c2efdcd69)
+![screenshot](https://github.com/user-attachments/assets/e89ff5e7-f8d8-4229-ae4e-32b1c81136bd)
 
 ## Features
 
@@ -20,7 +20,7 @@ Free and open-source alternative to the Microsoft To Do app using no third-party
 
 ## Installation
 
-### Download Portable .EXE for Windows 10/11: [🔗 To-Do_0.2.2.zip](https://github.com/jltk/todo-app/releases/download/0.2.2/To-Do_0.2.2.zip) [5,29 MB] 
+### Download Portable .EXE for Windows 10/11: [🔗 To-Do_0.3.0.zip](https://github.com/jltk/todo-app/releases/download/0.3.0/To-Do_Portable_0.3.0.zip) [5,29 MB] 
 
 or [visit the release page](https://github.com/jltk/todo-app/releases). 
 
@@ -40,13 +40,7 @@ $ git clone https://github.com/jltk/todo-app.git
 $ cd todo-app
 ```
 
-3. Install dependencies:
-
-```bash
-$ pip install -r requirements.txt
-```
-
-4. Run the application:
+3. Run the application:
 
 ```bash
 $ cd todo_app
@@ -59,10 +53,16 @@ $ python todo_app.py
 | ---- | ----------- |
 | **Ctrl+D** | Mark tasks as done |
 | **Ctrl+U** | Mark tasks as urgent |
+| **Ctrl+J** | Mark tasks as cancelled |
 | **Ctrl+Del** | Delete tasks |
 | **Ctrl+E** | Edit task |
 | **Ctrl+R** | Toggle dark mode |
 | **Ctrl+H** | About window |
+
+| MARKUP | DESCRIPTION |
+| ---- | ----------- |
+| ```---``` | Adds seperator |
+| ```---title here``` | Adds a seperator with title |
 
 ## Contribute
 
