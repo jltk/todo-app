@@ -20,7 +20,7 @@ Free and open-source alternative to Microsoft To Do without third-party dependen
 
 ## Installation
 
-### Download Portable .EXE for Windows 10/11: [🔗 To-Do_0.2.2.zip](https://github.com/jltk/todo-app/releases/download/0.2.2/To-Do_0.2.2.zip) [5,29 MB] 
+### Download Portable .EXE for Windows 10/11: [🔗 To-Do_Portable_0.3.0.zip](https://github.com/jltk/todo-app/releases/download/0.3.0/To-Do_Portable_0.3.0.zip) [5,29 MB] 
 
 or [visit the release page](https://github.com/jltk/todo-app/releases). 
 
@@ -40,7 +40,13 @@ $ git clone https://github.com/jltk/todo-app.git
 $ cd todo-app
 ```
 
-3. Run the application:
+3. Install dependencies:
+
+```bash
+$ python -r requirements.txt
+```
+
+4. Run the application:
 
 ```bash
 $ cd todo_app
